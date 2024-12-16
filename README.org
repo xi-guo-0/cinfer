@@ -1,0 +1,3 @@
+#+TITLE: cinfer - A Lightweight Deep Learning Inference Engine in C
+
+**cinfer** is A Lightweight Deep Learning Inference Engine in C.
