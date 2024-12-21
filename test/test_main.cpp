@@ -138,6 +138,46 @@ TEST(TensorTest, TensorAdd4D) {
   free_tensor(result);
 }
 
+TEST(TensorTest, MatrixMultiplication) {
+  size_t shape_a[] = {2, 3};
+  size_t shape_b[] = {3, 2};
+  size_t shape_result[] = {2, 2};
+
+  Tensor *a = create_tensor(CINFER_FLOAT32, shape_a, 2);
+  Tensor *b = create_tensor(CINFER_FLOAT32, shape_b, 2);
+  Tensor *result = create_tensor(CINFER_FLOAT32, shape_result, 2);
+
+  float *a_data = (float *)a->data;
+  float *b_data = (float *)b->data;
+
+  a_data[0] = 1.0f;
+  a_data[1] = 2.0f;
+  a_data[2] = 3.0f;
+  a_data[3] = 4.0f;
+  a_data[4] = 5.0f;
+  a_data[5] = 6.0f;
+
+  b_data[0] = 1.0f;
+  b_data[1] = 2.0f;
+  b_data[2] = 3.0f;
+  b_data[3] = 4.0f;
+  b_data[4] = 5.0f;
+  b_data[5] = 6.0f;
+
+  tensor_matmul(a, b, result);
+
+  float *result_data = (float *)result->data;
+
+  ASSERT_FLOAT_EQ(result_data[0], 22.0f);
+  ASSERT_FLOAT_EQ(result_data[1], 28.0f);
+  ASSERT_FLOAT_EQ(result_data[2], 49.0f);
+  ASSERT_FLOAT_EQ(result_data[3], 64.0f);
+
+  free_tensor(a);
+  free_tensor(b);
+  free_tensor(result);
+}
+
 int main(int argc, char *argv[]) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

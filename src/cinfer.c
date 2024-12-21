@@ -64,3 +64,16 @@ void tensor_add(Tensor *a, Tensor *b, Tensor *result) {
   cblas_scopy(size_a, (float *)a->data, 1, (float *)result->data, 1);
   cblas_saxpy(size_b, 1.0f, (float *)b->data, 1, (float *)result->data, 1);
 }
+
+void tensor_matmul(Tensor *a, Tensor *b, Tensor *result) {
+  int m = a->shape[0];
+  int k = a->shape[1];
+  int n = b->shape[1];
+
+  float alpha = 1.0f;
+  float beta = 0.0f;
+
+  cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, n, k, alpha,
+              (float *)a->data, k, (float *)b->data, n, beta,
+              (float *)result->data, n);
+}
