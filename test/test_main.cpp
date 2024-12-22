@@ -6,10 +6,10 @@ TEST(TensorTest, CreateAndFreeTensor) {
   Tensor *tensor = create_tensor(CINFER_FLOAT32, shape, 2);
 
   ASSERT_NE(tensor, nullptr);
-  ASSERT_EQ(tensor->type, CINFER_FLOAT32);
-  ASSERT_EQ(tensor->dim, 2);
-  ASSERT_EQ(tensor->shape[0], 2);
-  ASSERT_EQ(tensor->shape[1], 3);
+  EXPECT_EQ(tensor->type, CINFER_FLOAT32);
+  EXPECT_EQ(tensor->dim, 2);
+  EXPECT_EQ(tensor->shape[0], 2);
+  EXPECT_EQ(tensor->shape[1], 3);
 
   free_tensor(tensor);
 }
@@ -32,9 +32,9 @@ TEST(TensorTest, TensorAdd1D) {
   tensor_add(a, b, result);
 
   float *result_data = (float *)result->data;
-  ASSERT_FLOAT_EQ(result_data[0], 5.0f);
-  ASSERT_FLOAT_EQ(result_data[1], 7.0f);
-  ASSERT_FLOAT_EQ(result_data[2], 9.0f);
+  EXPECT_FLOAT_EQ(result_data[0], 5.0f);
+  EXPECT_FLOAT_EQ(result_data[1], 7.0f);
+  EXPECT_FLOAT_EQ(result_data[2], 9.0f);
 
   free_tensor(a);
   free_tensor(b);
@@ -61,10 +61,10 @@ TEST(TensorTest, TensorAdd2D) {
   tensor_add(a, b, result);
 
   float *result_data = (float *)result->data;
-  ASSERT_FLOAT_EQ(result_data[0], 6.0f);
-  ASSERT_FLOAT_EQ(result_data[1], 8.0f);
-  ASSERT_FLOAT_EQ(result_data[2], 10.0f);
-  ASSERT_FLOAT_EQ(result_data[3], 12.0f);
+  EXPECT_FLOAT_EQ(result_data[0], 6.0f);
+  EXPECT_FLOAT_EQ(result_data[1], 8.0f);
+  EXPECT_FLOAT_EQ(result_data[2], 10.0f);
+  EXPECT_FLOAT_EQ(result_data[3], 12.0f);
 
   free_tensor(a);
   free_tensor(b);
@@ -99,14 +99,14 @@ TEST(TensorTest, TensorAdd3D) {
   tensor_add(a, b, result);
 
   float *result_data = (float *)result->data;
-  ASSERT_FLOAT_EQ(result_data[0], 10.0f);
-  ASSERT_FLOAT_EQ(result_data[1], 12.0f);
-  ASSERT_FLOAT_EQ(result_data[2], 14.0f);
-  ASSERT_FLOAT_EQ(result_data[3], 16.0f);
-  ASSERT_FLOAT_EQ(result_data[4], 18.0f);
-  ASSERT_FLOAT_EQ(result_data[5], 20.0f);
-  ASSERT_FLOAT_EQ(result_data[6], 22.0f);
-  ASSERT_FLOAT_EQ(result_data[7], 24.0f);
+  EXPECT_FLOAT_EQ(result_data[0], 10.0f);
+  EXPECT_FLOAT_EQ(result_data[1], 12.0f);
+  EXPECT_FLOAT_EQ(result_data[2], 14.0f);
+  EXPECT_FLOAT_EQ(result_data[3], 16.0f);
+  EXPECT_FLOAT_EQ(result_data[4], 18.0f);
+  EXPECT_FLOAT_EQ(result_data[5], 20.0f);
+  EXPECT_FLOAT_EQ(result_data[6], 22.0f);
+  EXPECT_FLOAT_EQ(result_data[7], 24.0f);
 
   free_tensor(a);
   free_tensor(b);
@@ -130,7 +130,7 @@ TEST(TensorTest, TensorAdd4D) {
 
   float *result_data = (float *)result->data;
   for (int i = 0; i < 16; i++) {
-    ASSERT_FLOAT_EQ(result_data[i], (float)(i + i + 18));
+    EXPECT_FLOAT_EQ(result_data[i], (float)(i + i + 18));
   }
 
   free_tensor(a);
@@ -168,10 +168,40 @@ TEST(TensorTest, MatrixMultiplication) {
 
   float *result_data = (float *)result->data;
 
-  ASSERT_FLOAT_EQ(result_data[0], 22.0f);
-  ASSERT_FLOAT_EQ(result_data[1], 28.0f);
-  ASSERT_FLOAT_EQ(result_data[2], 49.0f);
-  ASSERT_FLOAT_EQ(result_data[3], 64.0f);
+  EXPECT_FLOAT_EQ(result_data[0], 22.0f);
+  EXPECT_FLOAT_EQ(result_data[1], 28.0f);
+  EXPECT_FLOAT_EQ(result_data[2], 49.0f);
+  EXPECT_FLOAT_EQ(result_data[3], 64.0f);
+
+  free_tensor(a);
+  free_tensor(b);
+  free_tensor(result);
+}
+
+TEST(TensorTest, TensorMultiply) {
+  size_t shape[] = {2, 2};
+  Tensor *a = create_tensor(CINFER_FLOAT32, shape, 2);
+  Tensor *b = create_tensor(CINFER_FLOAT32, shape, 2);
+  Tensor *result = create_tensor(CINFER_FLOAT32, shape, 2);
+
+  float *a_data = (float *)a->data;
+  float *b_data = (float *)b->data;
+  a_data[0] = 1.0f;
+  a_data[1] = 2.0f;
+  a_data[2] = 3.0f;
+  a_data[3] = 4.0f;
+  b_data[0] = 5.0f;
+  b_data[1] = 6.0f;
+  b_data[2] = 7.0f;
+  b_data[3] = 8.0f;
+
+  tensor_multiply(a, b, result);
+
+  float *result_data = (float *)result->data;
+  EXPECT_FLOAT_EQ(result_data[0], 5.0f);
+  EXPECT_FLOAT_EQ(result_data[1], 12.0f);
+  EXPECT_FLOAT_EQ(result_data[2], 21.0f);
+  EXPECT_FLOAT_EQ(result_data[3], 32.0f);
 
   free_tensor(a);
   free_tensor(b);

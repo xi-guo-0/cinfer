@@ -77,3 +77,18 @@ void tensor_matmul(Tensor *a, Tensor *b, Tensor *result) {
               (float *)a->data, k, (float *)b->data, n, beta,
               (float *)result->data, n);
 }
+
+void tensor_multiply(Tensor *a, Tensor *b, Tensor *result) {
+  size_t size = 1;
+  for (size_t i = 0; i < a->dim; i++) {
+    size *= a->shape[i];
+  }
+
+  float *a_data = (float *)a->data;
+  float *b_data = (float *)b->data;
+  float *result_data = (float *)result->data;
+
+  for (size_t i = 0; i < size; i++) {
+    result_data[i] = a_data[i] * b_data[i];
+  }
+}
