@@ -31,6 +31,7 @@ void free_tensor(Tensor *tensor);
 void tensor_add(Tensor *a, Tensor *b, Tensor *result);
 void tensor_matmul(Tensor *a, Tensor *b, Tensor *result);
 void tensor_multiply(Tensor *a, Tensor *b, Tensor *result);
+void tensor_relu(Tensor *input, Tensor *output);
 
 #ifdef __cplusplus
 }

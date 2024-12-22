@@ -208,6 +208,29 @@ TEST(TensorTest, TensorMultiply) {
   free_tensor(result);
 }
 
+TEST(TensorTest, ReLUActivation) {
+  size_t shape[] = {2, 2};
+  Tensor *input = create_tensor(CINFER_FLOAT32, shape, 2);
+  Tensor *output = create_tensor(CINFER_FLOAT32, shape, 2);
+
+  float *input_data = (float *)input->data;
+  input_data[0] = -1.0f;
+  input_data[1] = 2.0f;
+  input_data[2] = 0.0f;
+  input_data[3] = 3.0f;
+
+  tensor_relu(input, output);
+
+  float *output_data = (float *)output->data;
+  EXPECT_FLOAT_EQ(output_data[0], 0.0f);
+  EXPECT_FLOAT_EQ(output_data[1], 2.0f);
+  EXPECT_FLOAT_EQ(output_data[2], 0.0f);
+  EXPECT_FLOAT_EQ(output_data[3], 3.0f);
+
+  free_tensor(input);
+  free_tensor(output);
+}
+
 int main(int argc, char *argv[]) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

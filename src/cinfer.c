@@ -92,3 +92,17 @@ void tensor_multiply(Tensor *a, Tensor *b, Tensor *result) {
     result_data[i] = a_data[i] * b_data[i];
   }
 }
+
+void tensor_relu(Tensor *input, Tensor *output) {
+  size_t size = 1;
+  for (size_t i = 0; i < input->dim; i++) {
+    size *= input->shape[i];
+  }
+
+  float *input_data = (float *)input->data;
+  float *output_data = (float *)output->data;
+
+  for (size_t i = 0; i < size; i++) {
+    output_data[i] = input_data[i] > 0 ? input_data[i] : 0;
+  }
+}
