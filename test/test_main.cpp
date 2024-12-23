@@ -231,6 +231,29 @@ TEST(TensorTest, ReLUActivation) {
   free_tensor(output);
 }
 
+TEST(TensorTest, SigmoidActivation) {
+  size_t shape[] = {2, 2};
+  Tensor *input = create_tensor(CINFER_FLOAT32, shape, 2);
+  Tensor *output = create_tensor(CINFER_FLOAT32, shape, 2);
+
+  float *input_data = (float *)input->data;
+  input_data[0] = 0.0f;
+  input_data[1] = 1.0f;
+  input_data[2] = -1.0f;
+  input_data[3] = 2.0f;
+
+  tensor_sigmoid(input, output);
+
+  float *output_data = (float *)output->data;
+  ASSERT_NEAR(output_data[0], 0.5f, 1e-6);
+  ASSERT_NEAR(output_data[1], 0.731059f, 1e-6);
+  ASSERT_NEAR(output_data[2], 0.268941f, 1e-6);
+  ASSERT_NEAR(output_data[3], 0.880797f, 1e-6);
+
+  free_tensor(input);
+  free_tensor(output);
+}
+
 int main(int argc, char *argv[]) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

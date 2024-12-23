@@ -1,6 +1,7 @@
 #include "cinfer.h"
 #include "cJSON.h"
 #include "cblas.h"
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -104,5 +105,19 @@ void tensor_relu(Tensor *input, Tensor *output) {
 
   for (size_t i = 0; i < size; i++) {
     output_data[i] = input_data[i] > 0 ? input_data[i] : 0;
+  }
+}
+
+void tensor_sigmoid(Tensor *input, Tensor *output) {
+  size_t size = 1;
+  for (size_t i = 0; i < input->dim; i++) {
+    size *= input->shape[i];
+  }
+
+  float *input_data = (float *)input->data;
+  float *output_data = (float *)output->data;
+
+  for (size_t i = 0; i < size; i++) {
+    output_data[i] = 1.0f / (1.0f + exp(-input_data[i]));
   }
 }
