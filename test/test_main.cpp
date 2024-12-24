@@ -254,6 +254,41 @@ TEST(TensorTest, SigmoidActivation) {
   free_tensor(output);
 }
 
+TEST(LayerTest, DenseLayerForward) {
+  Dense_Layer *layer = create_dense_layer(2, 2, tensor_relu);
+  ASSERT_NE(layer, nullptr);
+
+  float *weights_data = (float *)layer->weights->data;
+  float *bias_data = (float *)layer->bias->data;
+
+  weights_data[0] = 1.0f;
+  weights_data[1] = 2.0f;
+  weights_data[2] = 3.0f;
+  weights_data[3] = 4.0f;
+
+  bias_data[0] = 0.1f;
+  bias_data[1] = 0.2f;
+
+  size_t input_shape[] = {1, 2};
+  Tensor *input = create_tensor(CINFER_FLOAT32, input_shape, 2);
+  float *input_data = (float *)input->data;
+  input_data[0] = 0.5f;
+  input_data[1] = 1.5f;
+
+  size_t output_shape[] = {1, 2};
+  Tensor *output = create_tensor(CINFER_FLOAT32, output_shape, 2);
+
+  dense_layer_forward(layer, input, output);
+
+  float *output_data = (float *)output->data;
+  ASSERT_NEAR(output_data[0], 5.1f, 1e-6);
+  ASSERT_NEAR(output_data[1], 7.2f, 1e-6);
+
+  free_tensor(input);
+  free_tensor(output);
+  free_dense_layer(layer);
+}
+
 int main(int argc, char *argv[]) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

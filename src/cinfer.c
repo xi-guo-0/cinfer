@@ -121,3 +121,35 @@ void tensor_sigmoid(Tensor *input, Tensor *output) {
     output_data[i] = 1.0f / (1.0f + exp(-input_data[i]));
   }
 }
+
+Dense_Layer *create_dense_layer(size_t input_size, size_t output_size,
+                                void (*activation)(Tensor *, Tensor *)) {
+  Dense_Layer *layer = (Dense_Layer *)malloc(sizeof(Dense_Layer));
+  if (layer == NULL)
+    return NULL;
+  size_t weight_shape[] = {input_size, output_size};
+  layer->weights = create_tensor(CINFER_FLOAT32, weight_shape, 2);
+  size_t bias_shape[] = {output_size};
+  layer->bias = create_tensor(CINFER_FLOAT32, bias_shape, 1);
+  layer->activation = activation;
+  return layer;
+}
+
+void free_dense_layer(Dense_Layer *layer) {
+  if (layer != NULL) {
+    free_tensor(layer->weights);
+    free_tensor(layer->bias);
+    free(layer);
+  }
+}
+
+void dense_layer_forward(Dense_Layer *layer, Tensor *input, Tensor *output) {
+  size_t temp_shape[] = {input->shape[0], layer->weights->shape[1]};
+  Tensor *temp = create_tensor(CINFER_FLOAT32, temp_shape, 2);
+  tensor_matmul(input, layer->weights, temp);
+  tensor_add(temp, layer->bias, output);
+  if (layer->activation != NULL) {
+    layer->activation(output, output);
+  }
+  free_tensor(temp);
+}
