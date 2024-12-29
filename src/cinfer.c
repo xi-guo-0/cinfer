@@ -20,16 +20,16 @@ Tensor *create_tensor(CINFER_NUMERIC_TYPE type, size_t *shape, size_t dim) {
     return NULL;
   }
 
-  for (int i = 0; i < dim; i++) {
+  for (size_t i = 0; i < dim; i++) {
     tensor->shape[i] = shape[i];
   }
 
   size_t total_size = 1;
-  for (int i = 0; i < dim; i++) {
+  for (size_t i = 0; i < dim; i++) {
     total_size *= shape[i];
   }
 
-  tensor->data = calloc(total_size, sizeof(float));
+  tensor->data = (float *)calloc(total_size, sizeof(float));
 
   if (tensor->data == NULL) {
     free(tensor->shape);
@@ -152,4 +152,139 @@ void dense_layer_forward(Dense_Layer *layer, Tensor *input, Tensor *output) {
     layer->activation(output, output);
   }
   free_tensor(temp);
+}
+
+Conv_Layer *create_conv_layer(size_t in_channels, size_t out_channels,
+                              size_t kernel_size, size_t stride,
+                              size_t padding) {
+  Conv_Layer *layer = (Conv_Layer *)malloc(sizeof(Conv_Layer));
+  if (layer == NULL)
+    return NULL;
+  size_t kernel_shape[] = {out_channels, in_channels, kernel_size, kernel_size};
+  layer->kernels = create_tensor(CINFER_FLOAT32, kernel_shape, 4);
+  if (layer->kernels == NULL) {
+    free(layer);
+    return NULL;
+  }
+  size_t bias_shape[] = {out_channels};
+  layer->bias = create_tensor(CINFER_FLOAT32, bias_shape, 1);
+  if (layer->bias == NULL) {
+    free_tensor(layer->kernels);
+    free(layer);
+    return NULL;
+  }
+  layer->stride = stride;
+  layer->padding = padding;
+  return layer;
+}
+
+void free_conv_layer(Conv_Layer *layer) {
+  if (layer != NULL) {
+    free_tensor(layer->kernels);
+    free_tensor(layer->bias);
+    free(layer);
+  }
+}
+
+void conv_layer_forward(Conv_Layer *layer, Tensor *input, Tensor *output) {
+  if (layer == NULL || input == NULL || output == NULL)
+    return;
+
+  float *input_data = (float *)input->data;
+  float *output_data = (float *)output->data;
+  float *kernels_data = (float *)layer->kernels->data;
+  float *bias_data = (float *)layer->bias->data;
+
+  size_t input_height = input->shape[1];
+  size_t input_width = input->shape[2];
+  size_t input_channels = input->shape[0];
+
+  size_t kernel_count = layer->kernels->shape[0];
+  size_t kernel_size = layer->kernels->shape[2];
+  size_t stride = layer->stride;
+  size_t padding = layer->padding;
+
+  size_t output_height =
+      (input_height + 2 * padding - kernel_size) / stride + 1;
+  size_t output_width = (input_width + 2 * padding - kernel_size) / stride + 1;
+
+  if (output->shape != NULL) {
+    free(output->shape);
+  }
+  output->shape = (size_t *)malloc(3 * sizeof(size_t));
+  if (output->shape == NULL) {
+    return;
+  }
+
+  output->shape[0] = kernel_count;
+  output->shape[1] = output_height;
+  output->shape[2] = output_width;
+  output->dim = 3;
+
+  if (output->data == NULL) {
+    output->data = calloc(
+        output->shape[0] * output->shape[1] * output->shape[2], sizeof(float));
+  }
+
+  for (size_t oc = 0; oc < kernel_count; oc++) {
+    for (size_t oh = 0; oh < output_height; oh++) {
+      for (size_t ow = 0; ow < output_width; ow++) {
+        float sum = bias_data[oc];
+        for (size_t kh = 0; kh < kernel_size; kh++) {
+          for (size_t kw = 0; kw < kernel_size; kw++) {
+            size_t ih = oh * stride - padding + kh;
+            size_t iw = ow * stride - padding + kw;
+            if (ih >= 0 && ih < input_height && iw >= 0 && iw < input_width) {
+              for (size_t ic = 0; ic < input_channels; ic++) {
+                sum += input_data[ic * input_height * input_width +
+                                  ih * input_width + iw] *
+                       kernels_data[oc * input_channels * kernel_size *
+                                        kernel_size +
+                                    ic * kernel_size * kernel_size +
+                                    kh * kernel_size + kw];
+              }
+            }
+          }
+        }
+
+        output_data[oc * output_height * output_width + oh * output_width +
+                    ow] = sum;
+      }
+    }
+  }
+}
+
+Model *create_model(Layer **layers, size_t num_layers) {
+  Model *model = (Model *)malloc(sizeof(Model));
+  model->layers = layers;
+  model->num_layers = num_layers;
+  return model;
+}
+
+void free_model(Model *model) {
+  for (size_t i = 0; i < model->num_layers; i++) {
+    free(model->layers[i]->layer);
+    free(model->layers[i]);
+  }
+  free(model->layers);
+  free(model);
+}
+
+void model_forward(Model *model, Tensor *input, Tensor *output) {
+  Tensor *current_input = input;
+  Tensor *current_output = output;
+  for (size_t i = 0; i < model->num_layers; i++) {
+    Layer *layer = model->layers[i];
+    switch (layer->type) {
+    case LAYER_DENSE:
+      dense_layer_forward((Dense_Layer *)layer->layer, current_input,
+                          current_output);
+      break;
+    case LAYER_CONV:
+      conv_layer_forward((Conv_Layer *)layer->layer, current_input,
+                         current_output);
+      break;
+    }
+    current_input = current_output;
+  }
 }

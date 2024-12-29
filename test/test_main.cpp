@@ -289,6 +289,149 @@ TEST(LayerTest, DenseLayerForward) {
   free_dense_layer(layer);
 }
 
+TEST(LayerTest, ConvLayerForward) {
+  size_t in_channels = 1;
+  size_t out_channels = 1;
+  size_t kernel_size = 3;
+  size_t stride = 1;
+  size_t padding = 0;
+  Conv_Layer *layer = create_conv_layer(in_channels, out_channels, kernel_size,
+                                        stride, padding);
+  ASSERT_NE(layer, nullptr);
+
+  float *kernels_data = (float *)layer->kernels->data;
+  kernels_data[0] = 1.0f;
+  kernels_data[1] = 0.0f;
+  kernels_data[2] = -1.0f;
+  kernels_data[3] = 1.0f;
+  kernels_data[4] = 0.0f;
+  kernels_data[5] = -1.0f;
+  kernels_data[6] = 1.0f;
+  kernels_data[7] = 0.0f;
+  kernels_data[8] = -1.0f;
+
+  float *bias_data = (float *)layer->bias->data;
+  bias_data[0] = 0.1f;
+
+  size_t input_shape[] = {1, 4, 4};
+  Tensor *input = create_tensor(CINFER_FLOAT32, input_shape, 3);
+  float *input_data = (float *)input->data;
+  for (size_t i = 0; i < 16; i++) {
+    input_data[i] = (float)i;
+  }
+
+  size_t output_shape[] = {1, 2, 2};
+  Tensor *output = create_tensor(CINFER_FLOAT32, output_shape, 3);
+
+  conv_layer_forward(layer, input, output);
+
+  float *output_data = (float *)output->data;
+  ASSERT_NEAR(output_data[0], -5.9f, 1e-6);
+  ASSERT_NEAR(output_data[1], -5.9f, 1e-6);
+  ASSERT_NEAR(output_data[2], -5.9f, 1e-6);
+  ASSERT_NEAR(output_data[3], -5.9f, 1e-6);
+
+  free_tensor(input);
+  free_tensor(output);
+  free_conv_layer(layer);
+}
+
+TEST(LayerTest, ConvLayerForwardBasic) {
+  Conv_Layer *layer = create_conv_layer(1, 1, 3, 1, 0);
+  size_t input_shape[] = {1, 5, 5};
+  Tensor *input = create_tensor(CINFER_FLOAT32, input_shape, 3);
+  Tensor *output = create_tensor(CINFER_FLOAT32, nullptr, 0);
+
+  float *input_data = (float *)input->data;
+  for (size_t i = 0; i < 25; ++i) {
+    input_data[i] = 1.0f;
+  }
+
+  conv_layer_forward(layer, input, output);
+
+  ASSERT_NE(output->data, nullptr);
+  EXPECT_EQ(output->shape[0], 1);
+  EXPECT_EQ(output->shape[1], 3);
+  EXPECT_EQ(output->shape[2], 3);
+
+  free_tensor(input);
+  free_tensor(output);
+  free_conv_layer(layer);
+}
+
+TEST(LayerTest, ConvLayerForwardNullInput) {
+  Conv_Layer *layer = nullptr;
+  Tensor *input = nullptr;
+  Tensor *output = nullptr;
+
+  conv_layer_forward(layer, input, output);
+}
+
+TEST(LayerTest, ConvLayerForwardStrideAndPadding) {
+  Conv_Layer *layer = create_conv_layer(1, 1, 3, 2, 1);
+  size_t input_shape[] = {1, 5, 5};
+  Tensor *input = create_tensor(CINFER_FLOAT32, input_shape, 3);
+  Tensor *output = create_tensor(CINFER_FLOAT32, nullptr, 0);
+
+  float *input_data = (float *)input->data;
+  for (size_t i = 0; i < 25; ++i) {
+    input_data[i] = 1.0f;
+  }
+
+  conv_layer_forward(layer, input, output);
+
+  ASSERT_NE(output->data, nullptr);
+  EXPECT_EQ(output->shape[0], 1);
+  EXPECT_EQ(output->shape[1], 3);
+  EXPECT_EQ(output->shape[2], 3);
+
+  free_tensor(input);
+  free_tensor(output);
+  free_conv_layer(layer);
+}
+
+TEST(LayerTest, ConvLayerForwardVariousKernelSizes) {
+  Conv_Layer *layer = create_conv_layer(1, 1, 3, 1, 1);
+  Tensor *input = create_tensor(CINFER_FLOAT32, (size_t[]){1, 5, 5}, 3);
+  Tensor *output = create_tensor(CINFER_FLOAT32, (size_t[]){1, 5, 5}, 3);
+
+  float *input_data = (float *)input->data;
+  for (int i = 0; i < 25; i++) {
+    input_data[i] = (float)i;
+  }
+
+  conv_layer_forward(layer, input, output);
+
+  EXPECT_EQ(output->shape[0], 1);
+  EXPECT_EQ(output->shape[1], 5);
+  EXPECT_EQ(output->shape[2], 5);
+
+  free_tensor(input);
+  free_tensor(output);
+  free_conv_layer(layer);
+}
+
+TEST(LayerTest, ConvLayerForwardDifferentInputShapes) {
+  Conv_Layer *layer = create_conv_layer(1, 1, 3, 1, 1);
+  Tensor *input = create_tensor(CINFER_FLOAT32, (size_t[]){1, 6, 6}, 3);
+  Tensor *output = create_tensor(CINFER_FLOAT32, (size_t[]){1, 4, 4}, 3);
+
+  float *input_data = (float *)input->data;
+  for (int i = 0; i < 36; i++) {
+    input_data[i] = (float)i;
+  }
+
+  conv_layer_forward(layer, input, output);
+
+  EXPECT_EQ(output->shape[0], 1);
+  EXPECT_EQ(output->shape[1], 6);
+  EXPECT_EQ(output->shape[2], 6);
+
+  free_tensor(input);
+  free_tensor(output);
+  free_conv_layer(layer);
+}
+
 int main(int argc, char *argv[]) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
